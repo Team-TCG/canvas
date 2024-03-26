@@ -598,7 +598,7 @@ func pathIntersections(p, q *Path, withTangents, withParallelTangents bool) ([]P
 						}
 						fmt.Printf("\n")
 					}
-					panic("Bug found in path intersection code, please report on GitHub at https://github.com/tdewolff/canvas/issues with the path or paths that caused this panic.")
+					panic("Bug found in path intersection code.")
 				}
 
 				// Remove degenerate tangent intersections at segment endpoint:

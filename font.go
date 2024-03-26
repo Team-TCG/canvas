@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"image/color"
 	"io/ioutil"
-	"log"
 	"math"
-	"os"
 	"reflect"
 	"sync"
 
-	"github.com/tdewolff/canvas/text"
+	"github.com/Team-TCG/canvas/text"
 	"github.com/tdewolff/font"
 )
 
@@ -181,40 +179,6 @@ var systemFonts = struct {
 	sync.Mutex
 }{}
 
-// FindLocalFont finds the path to a font from the system's fonts.
-func FindLocalFont(name string, style FontStyle) string {
-	log.Println("WARNING: github.com/tdewolff/canvas/FindLocalFont is deprecated, please use github.com/tdewolff/canvas/FindSystemFont") // TODO: remove
-	filename, _ := FindSystemFont(name, style)
-	return filename
-}
-
-// CacheSystemFonts will write and load the list of system fonts to the given filename. It scans the given directories for fonts, leave nil to use github.com/tdewolff/font/DefaultFontDirs().
-func CacheSystemFonts(filename string, dirs []string) error {
-	var fonts *font.SystemFonts
-	if info, err := os.Stat(filename); err == nil && info.Mode().IsRegular() {
-		fonts, err = font.LoadSystemFonts(filename)
-		if err != nil {
-			return err
-		}
-	} else {
-		if dirs == nil {
-			dirs = font.DefaultFontDirs()
-		}
-		var err error
-		fonts, err = font.FindSystemFonts(dirs)
-		if err != nil {
-			return err
-		}
-		if err := fonts.Save(filename); err != nil {
-			return err
-		}
-	}
-	systemFonts.Lock()
-	systemFonts.SystemFonts = fonts
-	systemFonts.Unlock()
-	return nil
-}
-
 // FindSystemFont finds the path to a font from the system's fonts.
 func FindSystemFont(name string, style FontStyle) (string, bool) {
 	systemFonts.Lock()
@@ -235,12 +199,6 @@ type Font struct {
 	shaper     text.Shaper
 	variations string
 	features   string
-}
-
-// LoadLocalFont loads a font from the system's fonts.
-func LoadLocalFont(name string, style FontStyle) (*Font, error) {
-	log.Println("WARNING: github.com/tdewolff/canvas/LoadLocalFont is deprecated, please use github.com/tdewolff/canvas/LoadSystemFont") // TODO: remove
-	return LoadSystemFont(name, style)
 }
 
 // LoadSystemFont loads a font from the system's fonts.
@@ -340,6 +298,7 @@ func (f *Font) Face(size float64, ifill interface{}, deco ...FontDecorator) *Fon
 	face.Size = size * mmPerPt
 	face.Style = f.style
 	face.Variant = FontNormal
+	face.LetterSpacing = 0
 
 	if paint, ok := ifill.(Paint); ok {
 		face.Fill = paint
@@ -396,18 +355,6 @@ func (family *FontFamily) SetFeatures(features string) {
 	for _, font := range family.fonts {
 		font.SetFeatures(features)
 	}
-}
-
-// LoadLocalFont loads a font from the system's fonts.
-func (family *FontFamily) LoadLocalFont(name string, style FontStyle) error {
-	log.Println("WARNING: github.com/tdewolff/canvas/FontFamily.LoadLocalFont is deprecated, please use github.com/tdewolff/canvas/FontFamily.LoadSystemFont") // TODO: remove
-	return family.LoadSystemFont(name, style)
-}
-
-// MustLoadLocalFont loads a font from the system's fonts and panics on error.
-func (family *FontFamily) MustLoadLocalFont(name string, style FontStyle) {
-	log.Println("WARNING: github.com/tdewolff/canvas/FontFamily.MustLoadLocalFont is deprecated, please use github.com/tdewolff/canvas/FontFamily.MustLoadSystemFont") // TODO: remove
-	family.MustLoadSystemFont(name, style)
 }
 
 // LoadSystemFont loads a font from the system's fonts.
@@ -489,9 +436,10 @@ func (family *FontFamily) Face(size float64, args ...interface{}) *FontFace {
 	}
 
 	face := &FontFace{
-		Fill:    Paint{Color: Black},
-		Hinting: font.VerticalHinting,
-		Size:    size * mmPerPt,
+		Fill:          Paint{Color: Black},
+		Hinting:       font.VerticalHinting,
+		Size:          size * mmPerPt,
+		LetterSpacing: 0,
 	}
 	for _, iarg := range args {
 		switch arg := iarg.(type) {
@@ -625,6 +573,8 @@ type FontFace struct {
 	Script    text.Script
 	Direction text.Direction // TODO: really needed here?
 
+	LetterSpacing int32
+
 	// letter spacing
 	// stroke and stroke color
 	// line height
@@ -755,7 +705,7 @@ func (face *FontFace) toPath(glyphs []text.Glyph, ppem uint16) (*Path, float64, 
 		if err != nil {
 			return p, 0.0, err
 		}
-		x += glyph.XAdvance
+		x += glyph.XAdvance + face.LetterSpacing
 		y += glyph.YAdvance
 	}
 

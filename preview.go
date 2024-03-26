@@ -3,13 +3,9 @@ package canvas
 import (
 	"bytes"
 	"fmt"
+	"github.com/Team-TCG/canvas/text"
 	"image/color"
 	"io/ioutil"
-	"os"
-	"path/filepath"
-	"runtime"
-
-	"github.com/tdewolff/canvas/text"
 )
 
 func loadFont(name string, style FontStyle) ([]byte, error) {
@@ -18,33 +14,6 @@ func loadFont(name string, style FontStyle) ([]byte, error) {
 		return nil, fmt.Errorf("failed to find font '%s'", name)
 	}
 	return ioutil.ReadFile(filename)
-}
-
-// DrawPreview draws the canvas's preview to a Context.
-func DrawPreview(ctx *Context) error {
-	root := os.Getenv("GOPATH")
-	if root == "" {
-		root = filepath.Join(os.Getenv("HOME"), "go")
-	}
-	root = filepath.Join(root, "src/github.com/tdewolff/canvas")
-
-	latin, err := loadFont("DejaVu Serif, serif", FontRegular)
-	if err != nil {
-		return err
-	}
-	arabic, err := loadFont("DejaVu Sans, sans", FontRegular)
-	if err != nil {
-		return err
-	}
-	devanagari, err := loadFont("Noto Serif Devanagari", FontRegular)
-	if err != nil {
-		return err
-	}
-	lenna, err := ioutil.ReadFile(filepath.Join(root, "resources/lenna.png"))
-	if err != nil {
-		return err
-	}
-	return DrawPreviewWithAssets(ctx, latin, arabic, devanagari, lenna)
 }
 
 // DrawPreviewWithAssets draws the canvas's preview to a Context with assets preloaded.
@@ -140,17 +109,6 @@ func DrawPreviewWithAssets(ctx *Context, latin, arabic, devanagari, lenna []byte
 	face = fontLatin.Face(80.0)
 	p, _, _ := face.ToPath("Stroke")
 	ctx.DrawPath(100, 5, p.Stroke(0.75, RoundCap, RoundJoin, Tolerance))
-
-	// Draw a LaTeX formula
-	if runtime.GOOS != "js" {
-		latex, err := ParseLaTeX(`$y_i = \frac{\sin(x)}{2} e^{\frac{a*b}{c}}$`)
-		if err != nil {
-			return err
-		}
-		latex = latex.Transform(Identity.Rotate(-30).Scale(2.0, 2.0))
-		ctx.SetFillColor(Black)
-		ctx.DrawPath(150, 90, latex)
-	}
 
 	// Draw an elliptic arc being dashed
 	ellipse, err := ParseSVGPath("A10 30 30 1 0 30 0z")

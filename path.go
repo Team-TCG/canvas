@@ -2,7 +2,6 @@ package canvas
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"sort"
 	"strings"
@@ -1693,74 +1692,6 @@ func (seg Segment) Arc() (float64, float64, float64, bool, bool) {
 	return seg.args[0], seg.args[1], seg.args[2], large, sweep
 }
 
-// Segments returns the path segments as a slice of segment structures.
-func (p *Path) Segments() []Segment {
-	log.Println("WARNING: github.com/tdewolff/canvas/Path.Segments is deprecated, please use github.com/tdewolff/canvas/Path.Scanner") // TODO: remove
-
-	segs := []Segment{}
-	var start, end Point
-	for i := 0; i < len(p.d); {
-		cmd := p.d[i]
-		switch cmd {
-		case MoveToCmd:
-			end = Point{p.d[i+1], p.d[i+2]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-			})
-		case LineToCmd:
-			end = Point{p.d[i+1], p.d[i+2]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-			})
-		case QuadToCmd:
-			cp := Point{p.d[i+1], p.d[i+2]}
-			end = Point{p.d[i+3], p.d[i+4]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-				args:  [4]float64{cp.X, cp.Y, 0.0, 0.0},
-			})
-		case CubeToCmd:
-			cp1 := Point{p.d[i+1], p.d[i+2]}
-			cp2 := Point{p.d[i+3], p.d[i+4]}
-			end = Point{p.d[i+5], p.d[i+6]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-				args:  [4]float64{cp1.X, cp1.Y, cp2.X, cp2.Y},
-			})
-		case ArcToCmd:
-			rx, ry, phi := p.d[i+1], p.d[i+2], p.d[i+3]*180.0/math.Pi
-			flags := p.d[i+4]
-			end = Point{p.d[i+5], p.d[i+6]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-				args:  [4]float64{rx, ry, phi, flags},
-			})
-		case CloseCmd:
-			end = Point{p.d[i+1], p.d[i+2]}
-			segs = append(segs, Segment{
-				Cmd:   cmd,
-				Start: start,
-				End:   end,
-			})
-		}
-		start = end
-		i += cmdLen(cmd)
-	}
-	return segs
-}
-
-////////////////////////////////////////////////////////////////
-
 func skipCommaWhitespace(path []byte) int {
 	i := 0
 	for i < len(path) && (path[i] == ' ' || path[i] == ',' || path[i] == '\n' || path[i] == '\r' || path[i] == '\t') {
@@ -1958,13 +1889,13 @@ func (p *Path) String() string {
 		cmd := p.d[i]
 		switch cmd {
 		case MoveToCmd:
-			fmt.Fprintf(&sb, "M%g %g", p.d[i+1], p.d[i+2])
+			_, _ = fmt.Fprintf(&sb, "M%g %g", p.d[i+1], p.d[i+2])
 		case LineToCmd:
-			fmt.Fprintf(&sb, "L%g %g", p.d[i+1], p.d[i+2])
+			_, _ = fmt.Fprintf(&sb, "L%g %g", p.d[i+1], p.d[i+2])
 		case QuadToCmd:
-			fmt.Fprintf(&sb, "Q%g %g %g %g", p.d[i+1], p.d[i+2], p.d[i+3], p.d[i+4])
+			_, _ = fmt.Fprintf(&sb, "Q%g %g %g %g", p.d[i+1], p.d[i+2], p.d[i+3], p.d[i+4])
 		case CubeToCmd:
-			fmt.Fprintf(&sb, "C%g %g %g %g %g %g", p.d[i+1], p.d[i+2], p.d[i+3], p.d[i+4], p.d[i+5], p.d[i+6])
+			_, _ = fmt.Fprintf(&sb, "C%g %g %g %g %g %g", p.d[i+1], p.d[i+2], p.d[i+3], p.d[i+4], p.d[i+5], p.d[i+6])
 		case ArcToCmd:
 			rot := p.d[i+3] * 180.0 / math.Pi
 			large, sweep := toArcFlags(p.d[i+4])
@@ -1976,9 +1907,9 @@ func (p *Path) String() string {
 			if sweep {
 				sSweep = "1"
 			}
-			fmt.Fprintf(&sb, "A%g %g %g %s %s %g %g", p.d[i+1], p.d[i+2], rot, sLarge, sSweep, p.d[i+5], p.d[i+6])
+			_, _ = fmt.Fprintf(&sb, "A%g %g %g %s %s %g %g", p.d[i+1], p.d[i+2], rot, sLarge, sSweep, p.d[i+5], p.d[i+6])
 		case CloseCmd:
-			fmt.Fprintf(&sb, "z")
+			_, _ = fmt.Fprintf(&sb, "z")
 		}
 		i += cmdLen(cmd)
 	}
@@ -1998,25 +1929,25 @@ func (p *Path) ToSVG() string {
 		switch cmd {
 		case MoveToCmd:
 			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, "M%v %v", num(x), num(y))
+			_, _ = fmt.Fprintf(&sb, "M%v %v", num(x), num(y))
 		case LineToCmd:
 			xStart, yStart := x, y
 			x, y = p.d[i+1], p.d[i+2]
 			if Equal(x, xStart) && Equal(y, yStart) {
 				// nothing
 			} else if Equal(x, xStart) {
-				fmt.Fprintf(&sb, "V%v", num(y))
+				_, _ = fmt.Fprintf(&sb, "V%v", num(y))
 			} else if Equal(y, yStart) {
-				fmt.Fprintf(&sb, "H%v", num(x))
+				_, _ = fmt.Fprintf(&sb, "H%v", num(x))
 			} else {
-				fmt.Fprintf(&sb, "L%v %v", num(x), num(y))
+				_, _ = fmt.Fprintf(&sb, "L%v %v", num(x), num(y))
 			}
 		case QuadToCmd:
 			x, y = p.d[i+3], p.d[i+4]
-			fmt.Fprintf(&sb, "Q%v %v %v %v", num(p.d[i+1]), num(p.d[i+2]), num(x), num(y))
+			_, _ = fmt.Fprintf(&sb, "Q%v %v %v %v", num(p.d[i+1]), num(p.d[i+2]), num(x), num(y))
 		case CubeToCmd:
 			x, y = p.d[i+5], p.d[i+6]
-			fmt.Fprintf(&sb, "C%v %v %v %v %v %v", num(p.d[i+1]), num(p.d[i+2]), num(p.d[i+3]), num(p.d[i+4]), num(x), num(y))
+			_, _ = fmt.Fprintf(&sb, "C%v %v %v %v %v %v", num(p.d[i+1]), num(p.d[i+2]), num(p.d[i+3]), num(p.d[i+4]), num(x), num(y))
 		case ArcToCmd:
 			rx, ry := p.d[i+1], p.d[i+2]
 			rot := p.d[i+3] * 180.0 / math.Pi
@@ -2034,10 +1965,10 @@ func (p *Path) ToSVG() string {
 				rx, ry = ry, rx
 				rot -= 90.0
 			}
-			fmt.Fprintf(&sb, "A%v %v %v %s%s%v %v", num(rx), num(ry), num(rot), sLarge, sSweep, num(p.d[i+5]), num(p.d[i+6]))
+			_, _ = fmt.Fprintf(&sb, "A%v %v %v %s%s%v %v", num(rx), num(ry), num(rot), sLarge, sSweep, num(p.d[i+5]), num(p.d[i+6]))
 		case CloseCmd:
 			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, "z")
+			_, _ = fmt.Fprintf(&sb, "z")
 		}
 		i += cmdLen(cmd)
 	}
@@ -2057,10 +1988,10 @@ func (p *Path) ToPS() string {
 		switch cmd {
 		case MoveToCmd:
 			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " %v %v moveto", dec(x), dec(y))
+			_, _ = fmt.Fprintf(&sb, " %v %v moveto", dec(x), dec(y))
 		case LineToCmd:
 			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " %v %v lineto", dec(x), dec(y))
+			_, _ = fmt.Fprintf(&sb, " %v %v lineto", dec(x), dec(y))
 		case QuadToCmd, CubeToCmd:
 			var start, cp1, cp2 Point
 			start = Point{x, y}
@@ -2072,7 +2003,7 @@ func (p *Path) ToPS() string {
 				cp2 = Point{p.d[i+3], p.d[i+4]}
 				x, y = p.d[i+5], p.d[i+6]
 			}
-			fmt.Fprintf(&sb, " %v %v %v %v %v %v curveto", dec(cp1.X), dec(cp1.Y), dec(cp2.X), dec(cp2.Y), dec(x), dec(y))
+			_, _ = fmt.Fprintf(&sb, " %v %v %v %v %v %v curveto", dec(cp1.X), dec(cp1.Y), dec(cp2.X), dec(cp2.Y), dec(x), dec(y))
 		case ArcToCmd:
 			x0, y0 := x, y
 			rx, ry, phi := p.d[i+1], p.d[i+2], p.d[i+3]
@@ -2084,54 +2015,13 @@ func (p *Path) ToPS() string {
 			theta1 = theta1 * 180.0 / math.Pi
 			rot := phi * 180.0 / math.Pi
 
-			fmt.Fprintf(&sb, " %v %v %v %v %v %v %v ellipse", dec(cx), dec(cy), dec(rx), dec(ry), dec(theta0), dec(theta1), dec(rot))
+			_, _ = fmt.Fprintf(&sb, " %v %v %v %v %v %v %v ellipse", dec(cx), dec(cy), dec(rx), dec(ry), dec(theta0), dec(theta1), dec(rot))
 			if !sweep {
-				fmt.Fprintf(&sb, "n")
+				_, _ = fmt.Fprintf(&sb, "n")
 			}
 		case CloseCmd:
 			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " closepath")
-		}
-		i += cmdLen(cmd)
-	}
-	return sb.String()[1:] // remove the first space
-}
-
-// ToPDF returns a string that represents the path in the PDF data format.
-func (p *Path) ToPDF() string {
-	if p.Empty() {
-		return ""
-	}
-	p = p.ReplaceArcs()
-
-	sb := strings.Builder{}
-	var x, y float64
-	for i := 0; i < len(p.d); {
-		cmd := p.d[i]
-		switch cmd {
-		case MoveToCmd:
-			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " %v %v m", dec(x), dec(y))
-		case LineToCmd:
-			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " %v %v l", dec(x), dec(y))
-		case QuadToCmd, CubeToCmd:
-			var start, cp1, cp2 Point
-			start = Point{x, y}
-			if cmd == QuadToCmd {
-				x, y = p.d[i+3], p.d[i+4]
-				cp1, cp2 = quadraticToCubicBezier(start, Point{p.d[i+1], p.d[i+2]}, Point{x, y})
-			} else {
-				cp1 = Point{p.d[i+1], p.d[i+2]}
-				cp2 = Point{p.d[i+3], p.d[i+4]}
-				x, y = p.d[i+5], p.d[i+6]
-			}
-			fmt.Fprintf(&sb, " %v %v %v %v %v %v c", dec(cp1.X), dec(cp1.Y), dec(cp2.X), dec(cp2.Y), dec(x), dec(y))
-		case ArcToCmd:
-			panic("arcs should have been replaced")
-		case CloseCmd:
-			x, y = p.d[i+1], p.d[i+2]
-			fmt.Fprintf(&sb, " h")
+			_, _ = fmt.Fprintf(&sb, " closepath")
 		}
 		i += cmdLen(cmd)
 	}
@@ -2142,7 +2032,6 @@ func (p *Path) ToPDF() string {
 func (p *Path) ToRasterizer(ras *vector.Rasterizer, resolution Resolution) {
 	dpmm := resolution.DPMM()
 	p = p.Flatten(PixelTolerance / dpmm) // tolerance of 1/10 of a pixel
-	// TODO: smoothen path using Ramer-...
 
 	dy := float64(ras.Bounds().Size().Y)
 	for i := 0; i < len(p.d); {

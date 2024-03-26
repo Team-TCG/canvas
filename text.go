@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/tdewolff/canvas/text"
+	"github.com/Team-TCG/canvas/text"
 	"github.com/tdewolff/font"
 )
 
@@ -508,16 +508,6 @@ func (rt *RichText) WriteImage(img image.Image, res Resolution, valign VerticalA
 	rt.WriteCanvas(c, valign)
 }
 
-// WriteLaTeX writes an inline LaTeX formula.
-func (rt *RichText) WriteLaTeX(s string) error {
-	p, err := ParseLaTeX(s)
-	if err != nil {
-		return err
-	}
-	rt.WritePath(p, Black, Baseline)
-	return nil
-}
-
 func (rt *RichText) Add(face *FontFace, text string) *RichText {
 	fmt.Println("WARNING: deprecated RichText.Add, use RichText.WriteFace") // TODO: remove
 	rt.WriteFace(face, text)
@@ -539,12 +529,6 @@ func (rt *RichText) AddPath(path *Path, col color.RGBA, valign VerticalAlign) *R
 func (rt *RichText) AddImage(img image.Image, res Resolution, valign VerticalAlign) *RichText {
 	fmt.Println("WARNING: deprecated RichText.AddImage, use RichText.WriteImage") // TODO: remove
 	rt.WriteImage(img, res, valign)
-	return rt
-}
-
-func (rt *RichText) AddLaTeX(s string) *RichText {
-	fmt.Println("WARNING: deprecated RichText.AddLaTeX, use RichText.WriteLaTeX") // TODO: remove
-	rt.WriteLaTeX(s)
 	return rt
 }
 
